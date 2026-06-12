@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import AuthController from './controller.js';
 import { validate } from '../../middlewares/validate.js';
-import { registerSchema, loginSchema } from './schema.js';
+import { registerSchema, loginSchema, changePasswordSchema } from './schema.js';
 import { verifyJWT, authorizeRoles } from '../../middlewares/auth.js';
 import upload from '../../middlewares/upload.js';
 
@@ -17,6 +17,8 @@ router.post('/logout', verifyJWT, AuthController.logout);
 router.get('/me', verifyJWT, AuthController.getMe);
 router.put('/profile', verifyJWT, AuthController.updateProfile);
 router.post('/profile/avatar', verifyJWT, upload.single('avatar'), AuthController.updateAvatar);
+router.delete('/profile/avatar', verifyJWT, AuthController.removeAvatar);
+router.put('/password', verifyJWT, validate(changePasswordSchema), AuthController.changePassword);
 
 // Admin routes
 router.get('/users', verifyJWT, authorizeRoles('ADMIN'), AuthController.getAllUsers);

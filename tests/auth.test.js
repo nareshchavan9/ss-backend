@@ -242,6 +242,93 @@ describe('Auth Endpoints', () => {
       });
     });
 
+    describe('DELETE /api/v1/auth/profile/avatar', () => {
+      it('should remove profile avatar successfully', async () => {
+        const mockUser = {
+          _id: 'user-id',
+          name: 'Name',
+          email: 'user@example.com',
+          avatar: 'old-avatar-url',
+          role: 'USER'
+        };
+
+        const updatedMockUser = {
+          _id: 'user-id',
+          name: 'Name',
+          email: 'user@example.com',
+          avatar: '',
+          role: 'USER'
+        };
+
+        jwtVerifySpy.mockReturnValue({ _id: 'user-id' });
+        jest.spyOn(User, 'findById').mockReturnValue({
+          select: jest.fn().mockResolvedValue(mockUser)
+        });
+        jest.spyOn(User, 'findByIdAndUpdate').mockReturnValue({
+          select: jest.fn().mockResolvedValue(updatedMockUser)
+        });
+
+        const res = await request(app)
+          .delete('/api/v1/auth/profile/avatar')
+          .set('Authorization', 'Bearer user-token');
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.avatar).toBe('');
+      });
+    });
+
+    describe('PUT /api/v1/auth/password', () => {
+      it('should change password successfully', async () => {
+        const mockUserInstance = {
+          _id: 'user-id',
+          isPasswordCorrect: jest.fn().mockResolvedValue(true),
+          save: jest.fn().mockResolvedValue(true),
+        };
+
+        jwtVerifySpy.mockReturnValue({ _id: 'user-id' });
+        jest.spyOn(User, 'findById').mockReturnValue({
+          select: jest.fn().mockResolvedValue(mockUserInstance)
+        });
+
+        const res = await request(app)
+          .put('/api/v1/auth/password')
+          .set('Authorization', 'Bearer user-token')
+          .send({
+            currentPassword: 'oldpassword123',
+            newPassword: 'newpassword123'
+          });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(mockUserInstance.isPasswordCorrect).toHaveBeenCalledWith('oldpassword123');
+        expect(mockUserInstance.password).toBe('newpassword123');
+      });
+
+      it('should fail with incorrect current password', async () => {
+        const mockUserInstance = {
+          _id: 'user-id',
+          isPasswordCorrect: jest.fn().mockResolvedValue(false),
+        };
+
+        jwtVerifySpy.mockReturnValue({ _id: 'user-id' });
+        jest.spyOn(User, 'findById').mockReturnValue({
+          select: jest.fn().mockResolvedValue(mockUserInstance)
+        });
+
+        const res = await request(app)
+          .put('/api/v1/auth/password')
+          .set('Authorization', 'Bearer user-token')
+          .send({
+            currentPassword: 'wrongpassword',
+            newPassword: 'newpassword123'
+          });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.body.success).toBe(false);
+      });
+    });
+
     describe('System Config Endpoints', () => {
       it('should retrieve system config for Admin', async () => {
         const mockAdmin = {

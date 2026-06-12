@@ -251,6 +251,53 @@ class AuthService {
   }
 
   /**
+   * Remove user avatar (set to empty string)
+   * @param {string} userId
+   * @returns {Promise<Object>} Updated user profile
+   */
+  async removeAvatar(userId) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { avatar: '' },
+      { new: true }
+    ).select('-password -refreshToken');
+
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+    return user;
+  }
+
+  /**
+   * Change user password
+   * @param {string} userId
+   * @param {Object} passwordData
+   * @returns {Promise<void>}
+   */
+  async changePassword(userId, { currentPassword, newPassword }) {
+    if (!currentPassword || !newPassword) {
+      throw new ApiError(400, 'Current password and new password are required');
+    }
+    if (newPassword.length < 6) {
+      throw new ApiError(400, 'New password must be at least 6 characters');
+    }
+
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    const isPasswordCorrect = await user.isPasswordCorrect(currentPassword);
+    if (!isPasswordCorrect) {
+      throw new ApiError(400, 'Incorrect current password');
+    }
+
+    user.password = newPassword;
+    await user.save();
+  }
+
+
+  /**
    * Get system configuration document
    * @returns {Promise<Object>} System configuration
    */

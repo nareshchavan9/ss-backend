@@ -1,4 +1,4 @@
-import AuthService from './service.js';
+  import AuthService from './service.js';
 import ApiResponse from '../../utils/ApiResponse.js';
 import ApiError from '../../utils/ApiError.js';
 import asyncHandler from '../../utils/asyncHandler.js';
@@ -163,6 +163,22 @@ class AuthController {
       .status(200)
       .json(new ApiResponse(200, updatedUser, 'User avatar updated successfully'));
   });
+
+  removeAvatar = asyncHandler(async (req, res) => {
+    const updatedUser = await AuthService.removeAvatar(req.user._id);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updatedUser, 'User avatar removed successfully'));
+  });
+
+  changePassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    await AuthService.changePassword(req.user._id, { currentPassword, newPassword });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, 'Password changed successfully'));
+  });
+
 
   getSystemConfig = asyncHandler(async (req, res) => {
     const config = await AuthService.getSystemConfig();
